@@ -23,9 +23,12 @@ function originOf(headerValue: string | undefined): string | null {
  * rejecting a mismatched Origin (falling back to Referer) blocks forged
  * cross-site requests while requiring no client-side token plumbing.
  *
- * Requests with neither header (non-browser API clients, plain GETs) are
- * let through, since they aren't part of the ambient-cookie CSRF threat
- * model this guards against.
+ * In production every legitimate state-changing caller is the browser app,
+ * which always sends Origin on a cross-site request, so a mutating request
+ * carrying neither header is rejected rather than trusted — that closes the
+ * "omit the header" path instead of relying on browsers never taking it.
+ * In development the header is not required, so local tooling (curl, tests)
+ * still works against a dev server.
  */
 export function verifyOrigin(req: Request, _res: Response, next: NextFunction): void {
   if (SAFE_METHODS.has(req.method)) {
@@ -35,7 +38,16 @@ export function verifyOrigin(req: Request, _res: Response, next: NextFunction): 
 
   const origin = originOf(req.get("origin")) ?? originOf(req.get("referer"));
 
-  if (origin && !env.corsOrigins.includes(origin)) {
+  if (!origin) {
+    if (env.nodeEnv === "production") {
+      next(new HttpError(403, "Request origin is not allowed"));
+      return;
+    }
+    next();
+    return;
+  }
+
+  if (!env.corsOrigins.includes(origin)) {
     next(new HttpError(403, "Request origin is not allowed"));
     return;
   }

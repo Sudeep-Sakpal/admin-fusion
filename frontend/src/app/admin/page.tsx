@@ -34,7 +34,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading, logout, refresh } = useAuth();
 
   const [data, setData] = useState<AdminData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +59,13 @@ export default function AdminPage() {
         problemStatements: psRes.problemStatements,
       });
     } catch (err) {
+      // A session that expired or was revoked mid-use would otherwise leave
+      // the admin stranded on stale data with no way back. Re-check the
+      // session so the guard below can send them to the login page.
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        await refresh();
+        return;
+      }
       setError(
         err instanceof ApiError
           ? err.message
@@ -67,7 +74,7 @@ export default function AdminPage() {
     } finally {
       setDataLoading(false);
     }
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (!authLoading && user?.role === "ADMIN") {

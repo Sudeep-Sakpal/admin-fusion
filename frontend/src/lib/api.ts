@@ -26,14 +26,19 @@ interface ApiEnvelope<T> {
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
 
+  // Content-Type is only meaningful when there is a body. Setting it on a
+  // GET would make every read a non-simple cross-origin request and force
+  // an extra CORS preflight round-trip per call.
+  const headers: Record<string, string> = { ...(options.headers as Record<string, string>) };
+  if (options.body !== undefined && headers["Content-Type"] === undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     });
   } catch {
     throw new ApiError(0, "Could not reach the server. Please check your connection.");

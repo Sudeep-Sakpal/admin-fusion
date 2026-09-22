@@ -1,3 +1,4 @@
+import { Request } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 /**
@@ -13,11 +14,38 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
  * store for express-rate-limit), which is intentionally out of scope here.
  */
 
+/**
+ * Login is throttled per *account*, not per IP.
+ *
+ * Per-IP throttling is actively wrong for this deployment: participants sit
+ * behind a single venue NAT (and all traffic additionally arrives through
+ * Render's edge proxy), so every user shares one apparent source address.
+ * An IP-keyed bucket therefore locks out the entire event as soon as any
+ * handful of failed attempts occur — an accidental self-DoS that is also
+ * trivially weaponisable by one attacker.
+ *
+ * Keying on the submitted userId scopes throttling to the account actually
+ * being guessed, which is what brute-force protection is meant to bound,
+ * and makes a global lockout impossible. `skipSuccessfulRequests` means a
+ * legitimate user who signs in is never charged against the budget — only
+ * failed attempts count. IP is used as a fallback key for requests with no
+ * usable userId (e.g. malformed bodies) so those are still bounded.
+ */
+function loginRateLimitKey(req: Request): string {
+  const rawUserId = (req.body as { userId?: unknown } | undefined)?.userId;
+  if (typeof rawUserId === "string" && rawUserId.trim()) {
+    return `user:${rawUserId.trim().toUpperCase()}`;
+  }
+  return `ip:${ipKeyGenerator(req.ip ?? "unknown")}`;
+}
+
 export const loginRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: loginRateLimitKey,
+  skipSuccessfulRequests: true,
   message: {
     success: false,
     message: "Too many login attempts. Please try again later.",

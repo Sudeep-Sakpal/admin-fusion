@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import { connectDB, disconnectDB } from "../config/db";
+import { env } from "../config/env";
 import { ProblemStatement, Team, Track, User, UserRole } from "../models";
 
 const TRACKS = [
@@ -105,8 +107,44 @@ const TEAM_LEADERS = [
 
 const DEFAULT_PASSWORD = "Passw0rd!";
 
+/**
+ * This script is destructive — it deletes every user, team, track and
+ * problem statement before re-inserting dummy data. Run against the live
+ * event database it would wipe the entire hackathon and replace the real
+ * accounts with ones whose password is published in this file.
+ *
+ * It therefore refuses to run in production unless the operator explicitly
+ * opts in with ALLOW_DESTRUCTIVE_SEED=true, and always prints the target
+ * database first so an accidental run against the wrong URI is obvious.
+ */
+function assertSeedingAllowed(): void {
+  if (env.nodeEnv !== "production") return;
+
+  if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    throw new Error(
+      "Refusing to seed: NODE_ENV=production and this script DELETES ALL " +
+        "users, teams, tracks and problem statements. If you really intend " +
+        "to wipe and re-seed this database, re-run with " +
+        "ALLOW_DESTRUCTIVE_SEED=true."
+    );
+  }
+
+  console.warn(
+    "WARNING: running a destructive seed against a production environment " +
+      "because ALLOW_DESTRUCTIVE_SEED=true was set."
+  );
+}
+
 async function seed() {
+  assertSeedingAllowed();
+
   await connectDB();
+
+  console.log(
+    `Seeding database "${mongoose.connection.name}" ` +
+      `(host: ${mongoose.connection.host}) — all existing records in ` +
+      `users/teams/tracks/problemstatements will be deleted.`
+  );
 
   console.log("Clearing existing collections...");
   await Promise.all([
