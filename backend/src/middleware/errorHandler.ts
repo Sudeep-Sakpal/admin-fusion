@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 
 export class HttpError extends Error {
   statusCode: number;
@@ -7,6 +7,12 @@ export class HttpError extends Error {
     super(message);
     this.statusCode = statusCode;
   }
+}
+
+export function asyncHandler(fn: RequestHandler): RequestHandler {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 }
 
 export function notFoundHandler(req: Request, res: Response) {

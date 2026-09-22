@@ -90,9 +90,24 @@ const PROBLEM_STATEMENTS_BY_TRACK: Record<
 };
 
 const TEAM_LEADERS = [
-  { name: "Asha Verma", email: "asha.verma@example.com", teamName: "Team Nimbus" },
-  { name: "Rohan Mehta", email: "rohan.mehta@example.com", teamName: "Team Vertex" },
-  { name: "Priya Nair", email: "priya.nair@example.com", teamName: "Team Catalyst" },
+  {
+    userId: "TL001",
+    name: "Asha Verma",
+    email: "asha.verma@example.com",
+    teamName: "Team Nimbus",
+  },
+  {
+    userId: "TL002",
+    name: "Rohan Mehta",
+    email: "rohan.mehta@example.com",
+    teamName: "Team Vertex",
+  },
+  {
+    userId: "TL003",
+    name: "Priya Nair",
+    email: "priya.nair@example.com",
+    teamName: "Team Catalyst",
+  },
 ];
 
 const DEFAULT_PASSWORD = "Passw0rd!";
@@ -127,6 +142,7 @@ async function seed() {
 
   console.log("Seeding admin user...");
   await User.create({
+    userId: "ADMIN001",
     name: "Admin",
     email: "admin@example.com",
     password: DEFAULT_PASSWORD,
@@ -151,6 +167,7 @@ async function seed() {
     });
 
     await User.create({
+      userId: leaderInfo.userId,
       name: leaderInfo.name,
       email: leaderInfo.email,
       password: DEFAULT_PASSWORD,
@@ -167,6 +184,9 @@ async function seed() {
   console.log(`  Teams: ${TEAM_LEADERS.length}`);
   console.log(`  Users: ${TEAM_LEADERS.length + 1} (1 admin + ${TEAM_LEADERS.length} team leaders)`);
   console.log(`  Default password for all seeded users: ${DEFAULT_PASSWORD}`);
+  console.log(
+    `  Login userIds: ADMIN001, ${TEAM_LEADERS.map((t) => t.userId).join(", ")}`
+  );
 }
 
 seed()
