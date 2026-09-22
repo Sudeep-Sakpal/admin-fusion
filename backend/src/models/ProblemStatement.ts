@@ -6,6 +6,7 @@ export interface IProblemStatement extends Document {
   description: string;
   code: string;
   track: Types.ObjectId;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,10 @@ const problemStatementSchema = new Schema<IProblemStatement>(
       ref: "Track",
       required: true,
       index: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }

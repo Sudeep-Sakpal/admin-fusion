@@ -37,3 +37,18 @@ export const selectTrackRateLimiter = rateLimit({
     message: "Too many requests. Please slow down and try again shortly.",
   },
 });
+
+// Same architecture/config as selectTrackRateLimiter, kept as its own
+// bucket so activity on one mutating team endpoint doesn't consume the
+// budget of the other.
+export const selectProblemRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id ?? ipKeyGenerator(req.ip ?? "unknown"),
+  message: {
+    success: false,
+    message: "Too many requests. Please slow down and try again shortly.",
+  },
+});

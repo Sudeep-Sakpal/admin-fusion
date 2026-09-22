@@ -1,8 +1,15 @@
 import { Router } from "express";
-import { selectTrack } from "../controllers/teamController";
+import {
+  listProblemStatements,
+  selectProblemStatement,
+  selectTrack,
+} from "../controllers/teamController";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { asyncHandler } from "../middleware/errorHandler";
-import { selectTrackRateLimiter } from "../middleware/rateLimiter";
+import {
+  selectProblemRateLimiter,
+  selectTrackRateLimiter,
+} from "../middleware/rateLimiter";
 import { UserRole } from "../models";
 
 const router = Router();
@@ -13,6 +20,21 @@ router.post(
   requireRole(UserRole.TEAM_LEADER),
   selectTrackRateLimiter,
   asyncHandler(selectTrack)
+);
+
+router.get(
+  "/problem-statements",
+  requireAuth,
+  requireRole(UserRole.TEAM_LEADER),
+  asyncHandler(listProblemStatements)
+);
+
+router.post(
+  "/select-problem",
+  requireAuth,
+  requireRole(UserRole.TEAM_LEADER),
+  selectProblemRateLimiter,
+  asyncHandler(selectProblemStatement)
 );
 
 export default router;
