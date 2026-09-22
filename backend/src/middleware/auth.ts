@@ -42,3 +42,13 @@ export function requireAuth(
     next(new HttpError(401, "Invalid or expired session"));
   }
 }
+
+export function requireRole(...roles: UserRole[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      next(new HttpError(403, "You do not have permission to perform this action"));
+      return;
+    }
+    next();
+  };
+}

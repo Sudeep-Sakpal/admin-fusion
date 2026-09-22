@@ -7,6 +7,7 @@ export interface ITrack extends Document {
   description: string;
   capacity: number;
   currentCount: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +41,10 @@ const trackSchema = new Schema<ITrack>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }

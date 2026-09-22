@@ -24,13 +24,18 @@ export function notFoundHandler(req: Request, res: Response) {
 
 export function errorHandler(
   err: Error | HttpError,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ) {
-  const statusCode = err instanceof HttpError ? err.statusCode : 500;
-  res.status(statusCode).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
+  if (err instanceof HttpError) {
+    res.status(err.statusCode).json({ success: false, message: err.message });
+    return;
+  }
+
+  // Unexpected error (Mongo/Mongoose internals, programming bugs, etc.).
+  // Never forward its message/stack to the client — only curated HttpError
+  // messages are safe to expose. Log server-side context for debugging.
+  console.error(`Unhandled error on ${req.method} ${req.originalUrl}:`, err);
+  res.status(500).json({ success: false, message: "Internal Server Error" });
 }

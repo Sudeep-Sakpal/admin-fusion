@@ -15,6 +15,7 @@ export interface IUser extends Document {
   password: string;
   role: UserRole;
   team: Types.ObjectId | null;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -56,6 +57,10 @@ const userSchema = new Schema<IUser>(
       ref: "Team",
       default: null,
       index: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }

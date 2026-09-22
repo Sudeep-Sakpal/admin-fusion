@@ -1,12 +1,5 @@
 import { connectDB, disconnectDB } from "../config/db";
-import {
-  ProblemStatement,
-  Team,
-  TeamSelectionStatus,
-  Track,
-  User,
-  UserRole,
-} from "../models";
+import { ProblemStatement, Team, Track, User, UserRole } from "../models";
 
 const TRACKS = [
   {
@@ -150,21 +143,12 @@ async function seed() {
   });
 
   console.log("Seeding team leaders and teams...");
-  for (let i = 0; i < TEAM_LEADERS.length; i++) {
-    const leaderInfo = TEAM_LEADERS[i];
-    const track = tracks[i % tracks.length];
-    const problemStatement = problemStatements.find(
-      (ps) => ps.track.toString() === track._id.toString()
-    );
-
-    const team = await Team.create({
-      name: leaderInfo.teamName,
-      track: track._id,
-      problemStatement: problemStatement?._id ?? null,
-      selectionStatus: problemStatement
-        ? TeamSelectionStatus.COMPLETED
-        : TeamSelectionStatus.TRACK_SELECTED,
-    });
+  // Teams start with no track selected (selectionStatus defaults to
+  // PENDING) so the track-selection API has real, untouched dummy teams
+  // to exercise. Track/problem-statement assignment is done through the
+  // actual selection endpoints, not pre-seeded.
+  for (const leaderInfo of TEAM_LEADERS) {
+    const team = await Team.create({ name: leaderInfo.teamName });
 
     await User.create({
       userId: leaderInfo.userId,
@@ -174,8 +158,6 @@ async function seed() {
       role: UserRole.TEAM_LEADER,
       team: team._id,
     });
-
-    await Track.updateOne({ _id: track._id }, { $inc: { currentCount: 1 } });
   }
 
   console.log("Seed complete:");
