@@ -52,3 +52,20 @@ export const selectProblemRateLimiter = rateLimit({
     message: "Too many requests. Please slow down and try again shortly.",
   },
 });
+
+// Shared across all /api/admin/* GET endpoints (mounted once at the router
+// level, not one limiter per route) — these are authenticated, ADMIN-only,
+// read-only, and used by a handful of staff, so a single generous
+// per-user budget is enough to blunt trivial flooding (e.g. a runaway
+// dashboard auto-refresh) without needing a dedicated limiter per route.
+export const adminReadRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id ?? ipKeyGenerator(req.ip ?? "unknown"),
+  message: {
+    success: false,
+    message: "Too many requests. Please slow down and try again shortly.",
+  },
+});

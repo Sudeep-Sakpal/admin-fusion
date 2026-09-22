@@ -1,4 +1,38 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch, ApiError } from "@/lib/api";
+import type { AuthUser } from "@/lib/types";
+
 export default function Home() {
+  const router = useRouter();
+  const { refresh } = useAuth();
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const data = await apiFetch<{ user: AuthUser }>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ userId, password }),
+      });
+      await refresh();
+      router.push(data.user.role === "ADMIN" ? "/admin" : "/");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
@@ -9,18 +43,22 @@ export default function Home() {
           Sign in to continue
         </p>
 
-        <form className="mt-6 space-y-4">
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label
-              htmlFor="email"
+              htmlFor="userId"
               className="block text-sm font-medium text-slate-700"
             >
-              Email
+              User ID
             </label>
             <input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
+              id="userId"
+              type="text"
+              autoComplete="username"
+              placeholder="e.g. TL001"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              required
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
             />
           </div>
@@ -35,16 +73,27 @@ export default function Home() {
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
             />
           </div>
 
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            disabled={submitting}
+            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Log In
+            {submitting ? "Signing in..." : "Log In"}
           </button>
         </form>
       </div>
