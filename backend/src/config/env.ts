@@ -10,12 +10,41 @@ const corsOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
 const nodeEnv = process.env.NODE_ENV || "development";
 const isProduction = nodeEnv === "production";
 
+// MongoDB Atlas is the only supported database for this project, in every
+// environment (local development, testing, and production) — there is no
+// local-MongoDB fallback. Fail immediately and clearly rather than silently
+// trying to reach a database that was never configured, or one still
+// carrying unreplaced placeholder text from .env.example.
+const mongodbUri = process.env.MONGODB_URI;
+
+if (!mongodbUri) {
+  throw new Error(
+    "MONGODB_URI environment variable is required. This project uses " +
+      "MongoDB Atlas only — set MONGODB_URI to your Atlas connection " +
+      "string in backend/.env (see backend/.env.example)."
+  );
+}
+
+if (!/^mongodb(\+srv)?:\/\//.test(mongodbUri)) {
+  throw new Error(
+    "MONGODB_URI must be a valid MongoDB connection string starting with " +
+      "'mongodb://' or 'mongodb+srv://'."
+  );
+}
+
+if (mongodbUri.includes("<") || mongodbUri.includes(">")) {
+  throw new Error(
+    "MONGODB_URI still contains placeholder text (e.g. <username>, " +
+      "<password>, <cluster>). Replace it with your real Atlas connection " +
+      "string in backend/.env."
+  );
+}
+
 export const env = {
   port: Number(process.env.PORT) || 4000,
   nodeEnv,
   corsOrigins,
-  mongodbUri:
-    process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/hackathon",
+  mongodbUri,
   bcryptSaltRounds: Number(process.env.BCRYPT_SALT_ROUNDS) || 10,
   jwtSecret: process.env.JWT_SECRET || "dev_insecure_secret_change_me",
   jwtExpiresInSeconds: Number(process.env.JWT_EXPIRES_IN_SECONDS) || 86400,
@@ -29,7 +58,8 @@ export const env = {
 
 // Fail fast at boot rather than silently running a misconfigured production
 // deployment. These are all cheap checks and each one guards a real
-// failure mode (forgeable tokens, wildcard CORS, missing database).
+// failure mode (forgeable tokens, wildcard CORS). MONGODB_URI is already
+// validated unconditionally above.
 if (isProduction) {
   const problems: string[] = [];
 
@@ -37,12 +67,6 @@ if (isProduction) {
     problems.push("JWT_SECRET is required in production");
   } else if (process.env.JWT_SECRET.length < 32) {
     problems.push("JWT_SECRET must be at least 32 characters in production");
-  }
-
-  if (!process.env.MONGODB_URI) {
-    problems.push(
-      "MONGODB_URI is required in production (refusing to fall back to localhost)"
-    );
   }
 
   if (!process.env.CORS_ORIGIN) {
