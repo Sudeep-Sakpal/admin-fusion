@@ -17,6 +17,24 @@ export interface AuthUser {
   } | null;
 }
 
+export interface Track {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  capacity: number;
+  currentCount: number;
+  remainingSlots: number;
+}
+
+export interface TeamProblemStatement {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  trackId: string;
+}
+
 export interface AdminDashboard {
   teams: {
     total: number;

@@ -5,10 +5,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { AuthUser } from "@/lib/types";
+import { TeamLeaderFlow } from "@/components/team/TeamLeaderFlow";
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading: authLoading, refresh, logout } = useAuth();
+  const { user, loading: authLoading, refresh } = useAuth();
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -56,29 +57,12 @@ export default function Home() {
   }
 
   if (user) {
-    // ADMIN is redirected by the effect above; this renders for
-    // TEAM_LEADER (and briefly for ADMIN until that redirect runs).
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center px-4">
-        <div className="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-md">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Hackathon Management System
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">Signed in as {user.name}</p>
-          {user.team && (
-            <p className="mt-1 text-sm text-slate-500">
-              Team: {user.team.name} — {user.team.selectionStatus.replace("_", " ")}
-            </p>
-          )}
-          <button
-            onClick={() => logout()}
-            className="mt-6 w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-          >
-            Log out
-          </button>
-        </div>
-      </main>
-    );
+    // ADMIN is redirected by the effect above; render nothing meanwhile so
+    // the team-leader flow never flashes for an admin account.
+    if (user.role !== "TEAM_LEADER") {
+      return null;
+    }
+    return <TeamLeaderFlow user={user} />;
   }
 
   return (
