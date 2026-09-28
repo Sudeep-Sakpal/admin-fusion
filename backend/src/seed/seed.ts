@@ -3,30 +3,46 @@ import { connectDB, disconnectDB } from "../config/db";
 import { env } from "../config/env";
 import { ProblemStatement, Team, Track, User, UserRole } from "../models";
 
+// ─── Final event structure ────────────────────────────────────────────────────
+// 6 tracks, 144 shortlisted teams total, capacity 24 per track.
+// Seed contains 3 dummy teams for development/testing only.
+
 const TRACKS = [
   {
-    name: "Artificial Intelligence & ML",
-    code: "AI",
-    description: "Build intelligent systems and ML-powered applications.",
-    capacity: 20,
+    name: "GeoAI",
+    code: "GEOAI",
+    description: "Geospatial intelligence powered by AI and satellite data.",
+    capacity: 24,
   },
   {
-    name: "Web3 & Blockchain",
-    code: "WEB3",
-    description: "Decentralized apps, smart contracts, and blockchain tools.",
-    capacity: 20,
+    name: "SpaceTech",
+    code: "SPACETECH",
+    description: "Innovations in space exploration, satellites, and beyond.",
+    capacity: 24,
   },
   {
     name: "FinTech",
-    code: "FIN",
+    code: "FINTECH",
     description: "Solutions for banking, payments, and financial inclusion.",
-    capacity: 20,
+    capacity: 24,
   },
   {
-    name: "HealthTech",
-    code: "HEALTH",
-    description: "Technology for healthcare access and patient outcomes.",
-    capacity: 20,
+    name: "IoT",
+    code: "IOT",
+    description: "Connected devices and smart systems for the physical world.",
+    capacity: 24,
+  },
+  {
+    name: "CyberSec & Blockchain",
+    code: "CYBERSEC",
+    description: "Cybersecurity tools, threat detection, and blockchain solutions.",
+    capacity: 24,
+  },
+  {
+    name: "Healthcare",
+    code: "HEALTHCARE",
+    description: "Technology for healthcare access and better patient outcomes.",
+    capacity: 24,
   },
 ];
 
@@ -34,74 +50,113 @@ const PROBLEM_STATEMENTS_BY_TRACK: Record<
   string,
   { title: string; description: string; code: string }[]
 > = {
-  AI: [
+  GEOAI: [
     {
-      title: "Smart Resume Screener",
-      description: "Automate candidate shortlisting using NLP.",
-      code: "AI-01",
+      title: "Urban Heat Island Mapper",
+      description:
+        "Use satellite imagery and AI to identify and visualise urban heat islands for city planners.",
+      code: "GEO-01",
     },
     {
-      title: "Crop Disease Detector",
-      description: "Classify plant diseases from leaf images.",
-      code: "AI-02",
-    },
-  ],
-  WEB3: [
-    {
-      title: "Decentralized Voting",
-      description: "Tamper-proof voting using smart contracts.",
-      code: "WEB3-01",
-    },
-    {
-      title: "NFT Ticketing",
-      description: "Event ticketing with fraud-proof NFTs.",
-      code: "WEB3-02",
+      title: "Flood Risk Predictor",
+      description:
+        "Combine topographic and precipitation data to predict neighbourhood-level flood risk in real time.",
+      code: "GEO-02",
     },
   ],
-  FIN: [
+  SPACETECH: [
+    {
+      title: "Debris Collision Avoidance System",
+      description:
+        "Track low-Earth-orbit debris and alert satellite operators of collision risks using predictive modelling.",
+      code: "SPACE-01",
+    },
+    {
+      title: "Satellite Imagery Crop Monitor",
+      description:
+        "Analyse multispectral satellite images to track crop health and yield forecasts across large farmlands.",
+      code: "SPACE-02",
+    },
+  ],
+  FINTECH: [
     {
       title: "Micro-Savings Assistant",
-      description: "Nudge users toward small, automated savings goals.",
+      description:
+        "Nudge users toward small, automated savings goals through behavioural analytics and personalised prompts.",
       code: "FIN-01",
     },
     {
       title: "Expense Anomaly Detector",
-      description: "Flag unusual spending patterns in real time.",
+      description:
+        "Flag unusual spending patterns in real time to help users and banks prevent fraud.",
       code: "FIN-02",
     },
   ],
-  HEALTH: [
+  IOT: [
+    {
+      title: "Smart Energy Consumption Dashboard",
+      description:
+        "Aggregate data from IoT sensors to give households and facilities actionable energy-saving insights.",
+      code: "IOT-01",
+    },
+    {
+      title: "Predictive Equipment Maintenance",
+      description:
+        "Use sensor telemetry from industrial equipment to predict failures before they occur.",
+      code: "IOT-02",
+    },
+  ],
+  CYBERSEC: [
+    {
+      title: "Phishing URL Classifier",
+      description:
+        "Build an ML model that identifies phishing URLs in real time to protect users from social engineering.",
+      code: "CYBER-01",
+    },
+    {
+      title: "Decentralised Identity Wallet",
+      description:
+        "Create a blockchain-based self-sovereign identity wallet that minimises reliance on centralised authorities.",
+      code: "CYBER-02",
+    },
+  ],
+  HEALTHCARE: [
     {
       title: "Appointment No-Show Predictor",
-      description: "Predict and reduce missed clinic appointments.",
+      description:
+        "Predict and reduce missed clinic appointments using patient history and contextual signals.",
       code: "HEALTH-01",
     },
     {
       title: "Medication Adherence Tracker",
-      description: "Help patients stay on track with prescriptions.",
+      description:
+        "Help patients stay on track with prescriptions through smart reminders and adherence analytics.",
       code: "HEALTH-02",
     },
   ],
 };
 
+// 3 dummy team leaders for development/testing.
+// All teams start with track: null, problemStatement: null,
+// selectionStatus: PENDING (model defaults handle this automatically).
 const TEAM_LEADERS = [
   {
     userId: "TL001",
-    name: "Asha Verma",
-    email: "asha.verma@example.com",
-    teamName: "Team Nimbus",
+    name: "Team Leader 001",
+    email: "tl001@example.com",
+    teamName: "Team Geo Titans",
   },
   {
     userId: "TL002",
-    name: "Rohan Mehta",
-    email: "rohan.mehta@example.com",
-    teamName: "Team Vertex",
+    name: "Team Leader 002",
+    email: "tl002@example.com",
+    teamName: "Team SpaceXplore",
   },
   {
     userId: "TL003",
-    name: "Priya Nair",
-    email: "priya.nair@example.com",
-    teamName: "Team Catalyst",
+    name: "Team Leader 003",
+    email: "tl003@example.com",
+    teamName: "Team FinNova",
   },
 ];
 
